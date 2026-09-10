@@ -1,5 +1,5 @@
 {
-  "version": "1.1.3",
-  "notes": "Correction de stabilité : le serveur local ne gèle plus lors des rafales de requêtes (impression, export, démarrage).",
+  "version": "1.1.4",
+  "notes": "Version de test de la mise à jour automatique : vérifiez que l'application se ferme, se met à jour et redémarre toute seule.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
