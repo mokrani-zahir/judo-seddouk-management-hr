@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.5"
+APP_VERSION = "1.1.6"
 
 
 def update_json_url():
@@ -516,7 +516,20 @@ class Handler(BaseHTTPRequestHandler):
             except OSError:
                 pass
             CREATE_NO_WINDOW = 0x08000000
-            subprocess.Popen(["wscript.exe", cmd_path], creationflags=CREATE_NO_WINDOW)
+            # IMPORTANT : retirer les variables privées de PyInstaller (_PYI_*) de
+            # l'environnement hérité. Sinon le nouvel EXE relancé par la VBS hérite de
+            # _PYI_PARENT_PROCESS_LEVEL=1 (croit être le "child" d'une app onefile déjà
+            # lancée) et échoue la validation de sécurité du bootloader avec
+            # "Security validation failure: parent process has different executable!".
+            env = dict(os.environ)
+            for key in list(env):
+                if key.startswith("_PYI_") or key in ("PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP"):
+                    env.pop(key, None)
+            subprocess.Popen(
+                ["wscript.exe", cmd_path],
+                creationflags=CREATE_NO_WINDOW,
+                env=env,
+            )
             _schedule_close_after_apply()
             self._send_json({"ok": True})
         except Exception as e:
