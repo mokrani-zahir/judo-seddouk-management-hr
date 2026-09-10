@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.18"
+APP_VERSION = "1.1.20"
 
 
 def update_json_url():
@@ -316,6 +316,11 @@ def fetch_all():
 
 
 class Handler(BaseHTTPRequestHandler):
+    # Empêche deux applications simultanées : le front a des retries, et un double
+    # relancement de VBS (deux taskkill) peut SUPPRIMER l'EXE déjà remplacé.
+    _applying = False
+    _apply_lock = threading.Lock()
+
     # HTTP/1.0 + connexion fermée après chaque réponse : idéal en local mono-utilisateur,
     # et surtout évite l'empilement de threads keep-alive qui gelait le serveur lors
     # des rafales de requêtes (démarrage de la fenêtre, impression, export).
@@ -476,13 +481,18 @@ class Handler(BaseHTTPRequestHandler):
         if not getattr(sys, "frozen", False):
             self._send_json({"error": "L'auto-mise à jour nécessite la version portable (EXE)"}, 400)
             return
+        with Handler._apply_lock:
+            if Handler._applying:
+                self._send_json({"ok": True, "already": True})
+                return
+            if not os.path.exists(os.path.join(EXE_DIR, "Judo_Club_Seddouk.new.exe")):
+                self._send_json({"error": "Fichier de mise à jour introuvable — relancez le téléchargement"}, 400)
+                return
+            if not _dir_writable(EXE_DIR):
+                self._send_json({"error": "Le dossier de l'application n'est pas accessible en écriture — déplacez-le dans C:\\JudoClubSeddouk et réessayez."})
+                return
+            Handler._applying = True
         dest = os.path.join(EXE_DIR, "Judo_Club_Seddouk.new.exe")
-        if not os.path.exists(dest):
-            self._send_json({"error": "Fichier de mise à jour introuvable — relancez le téléchargement"}, 400)
-            return
-        if not _dir_writable(EXE_DIR):
-            self._send_json({"error": "Le dossier de l'application n'est pas accessible en écriture — déplacez-le dans C:\\JudoClubSeddouk et réessayez."})
-            return
         cmd_path = os.path.join(EXE_DIR, "update-install.vbs")
         script = (
             "Option Explicit\n"

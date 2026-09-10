@@ -1,5 +1,5 @@
 {
-  "version": "1.1.19",
-  "notes": "Correction : la mise à jour automatique ne s'emballe plus quand l'application est dans un dossier protégé (Program Files…). Un message clair s'affiche au démarrage pour vous indiquer où déplacer l'application.",
+  "version": "1.1.20",
+  "notes": "Sécurité : impossible de déclencher deux mises à jour en même temps (un double lancement de l'installeur pouvait supprimer l'application).",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
