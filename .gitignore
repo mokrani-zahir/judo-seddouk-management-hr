@@ -10,6 +10,8 @@ __pycache__/
 # Fichiers de mise à jour en attente
 Judo_Club_Seddouk.new.exe
 update-install.cmd
+update-install.vbs
+update-log.txt
 
 # Utilitaires
 *.log

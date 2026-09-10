@@ -26,7 +26,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.1.2"
 
 
 def update_json_url():
@@ -429,22 +429,68 @@ class Handler(BaseHTTPRequestHandler):
         if not os.path.exists(dest):
             self._send_json({"error": "Fichier de mise à jour introuvable — relancez le téléchargement"}, 400)
             return
-        cmd_path = os.path.join(APP_DIR, "update-install.cmd")
+        cmd_path = os.path.join(APP_DIR, "update-install.vbs")
         script = (
-            "@echo off\r\n"
-            "timeout /t 5 /nobreak >nul\r\n"
-            'cd /d "%~dp0"\r\n'
-            'del /f /q "Judo_Club_Seddouk.exe"\r\n'
-            'move /y "Judo_Club_Seddouk.new.exe" "Judo_Club_Seddouk.exe"\r\n'
-            'start "" "Judo_Club_Seddouk.exe"\r\n'
-            'del /f /q "%~f0"\r\n'
+            "Option Explicit\n"
+            "Dim fso, dir, tries, shell\n"
+            "Set fso = CreateObject(\"Scripting.FileSystemObject\")\n"
+            "Set shell = CreateObject(\"WScript.Shell\")\n"
+            "dir = fso.GetParentFolderName(WScript.ScriptFullName)\n"
+            "Call LogMsg(dir, \"[start] \" & Now)\n"
+            "tries = 0\n"
+            "Do While CheckRunning() And tries < 40\n"
+            "  WScript.Sleep 1000\n"
+            "  tries = tries + 1\n"
+            "Loop\n"
+            "If CheckRunning() Then\n"
+            "  Call LogMsg(dir, \"[force] \" & Now)\n"
+            "  shell.Run \"taskkill /f /im Judo_Club_Seddouk.exe\", 0, True\n"
+            "  WScript.Sleep 2000\n"
+            "End If\n"
+            "Call ReplaceFiles(dir)\n"
+            "Call LogMsg(dir, \"[replaced] \" & Now)\n"
+            "shell.Run Chr(34) & dir & \"\\Judo_Club_Seddouk.exe\" & Chr(34), 1, False\n"
+            "fso.DeleteFile WScript.ScriptFullName\n"
+            "fso.DeleteFile dir & \"\\update-log.txt\"\n"
+            "\n"
+            "Function CheckRunning()\n"
+            "  Dim q\n"
+            "  q = \"SELECT ProcessId FROM Win32_Process WHERE Name='Judo_Club_Seddouk.exe'\"\n"
+            "  If GetObject(\"winmgmts:\\\\.\\root\\cimv2\").ExecQuery(q).Count > 0 Then\n"
+            "    CheckRunning = True\n"
+            "  Else\n"
+            "    CheckRunning = False\n"
+            "  End If\n"
+            "End Function\n"
+            "\n"
+            "Sub ReplaceFiles(dir)\n"
+            "  Dim i\n"
+            "  For i = 1 To 20\n"
+            "    On Error Resume Next\n"
+            "    fso.DeleteFile dir & \"\\Judo_Club_Seddouk.exe\", True\n"
+            "    fso.MoveFile dir & \"\\Judo_Club_Seddouk.new.exe\", dir & \"\\Judo_Club_Seddouk.exe\"\n"
+            "    If Err.Number = 0 And fso.FileExists(dir & \"\\Judo_Club_Seddouk.exe\") Then Exit For\n"
+            "    Err.Clear\n"
+            "    On Error GoTo 0\n"
+            "    WScript.Sleep 1000\n"
+            "  Next\n"
+            "  On Error GoTo 0\n"
+            "End Sub\n"
+            "\n"
+            "Sub LogMsg(dir, msg)\n"
+            "  Dim f\n"
+            "  On Error Resume Next\n"
+            "  Set f = fso.OpenTextFile(dir & \"\\update-log.txt\", 8, True)\n"
+            "  f.WriteLine msg\n"
+            "  f.Close\n"
+            "  On Error GoTo 0\n"
+            "End Sub\n"
         )
         try:
             with open(cmd_path, "w", encoding="utf-8") as f:
                 f.write(script)
             CREATE_NO_WINDOW = 0x08000000
-            subprocess.Popen(["cmd.exe", "/c", cmd_path], creationflags=CREATE_NO_WINDOW)
-            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            subprocess.Popen(["wscript.exe", cmd_path], creationflags=CREATE_NO_WINDOW)
             self._send_json({"ok": True})
         except Exception as e:
             self._send_json({"error": str(e)})
@@ -456,20 +502,41 @@ def open_browser():
 
 class Api:
     """Pont JS <-> Python : permet d'ouvrir la fiche / le badge dans une
-    nouvelle fenêtre du logiciel (au lieu de window.open d'un navigateur)."""
+    nouvelle fenêtre du logiciel (au lieu de window.open d'un navigateur),
+    et de fermer proprement l'application après une mise à jour."""
 
     def __init__(self, base_url):
         self.base_url = base_url
+        self.main_window = None
+        self.child_windows = []
 
     def open_file(self, rel_url):
         import webview
         try:
             url = self.base_url + "/" + unquote(rel_url.lstrip("/"))
-            webview.create_window(
+            w = webview.create_window(
                 "Judo Club Seddouk", url, width=900, height=1200, min_size=(600, 700)
             )
+            self.child_windows.append(w)
         except Exception as e:
             print("open_file error:", e)
+        return True
+
+    def close_app(self):
+        """Ferme toutes les fenêtres : l'application quitte, puis le script
+        de mise à jour remplace l'ancien EXE par le nouveau et le relance."""
+        import webview
+        try:
+            for w in list(self.child_windows):
+                try:
+                    if w is not None:
+                        w.destroy()
+                except Exception:
+                    pass
+            if self.main_window is not None:
+                self.main_window.destroy()
+        except Exception as e:
+            print("close_app error:", e)
         return True
 
     def save_export(self, data, filename):
@@ -501,6 +568,7 @@ def run_gui(server):
         min_size=(1024, 700),
         js_api=api,
     )
+    api.main_window = window
 
     def stop_server():
         threading.Thread(target=server.shutdown, daemon=True).start()

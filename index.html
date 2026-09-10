@@ -1576,7 +1576,14 @@ async function applyUpdate() {
     const r = await (await fetch('/api/update/apply', { method: 'POST' })).json();
     if (!r.ok) { showToast('Échec de l\'installation : ' + (r.error || '?'), 'error'); return; }
     document.getElementById('confirmUpdateModal').classList.remove('active');
-    setTimeout(function() { try { window.close(); } catch (e) {} }, 800);
+    showToast('Fermeture et remplacement en cours…', '');
+    setTimeout(function() {
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.close_app) {
+        try { window.pywebview.api.close_app(); } catch (e) { try { window.close(); } catch (e2) {} }
+      } else {
+        try { window.close(); } catch (e) {}
+      }
+    }, 600);
   } catch (e) {
     showToast('Échec de l\'installation : ' + e.message, 'error');
   }
