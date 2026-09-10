@@ -1,5 +1,5 @@
 {
-  "version": "1.1.14",
-  "notes": "Correction du blocage au demarrage : la récursion infinie interne à pywebview est éliminée (attributs internes masqués).",
+  "version": "1.1.15",
+  "notes": "Fenetre qui s'ouvre automatiquement en grand (~90% de l'ecran) avec les boutons classiques, sans plein ecran.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

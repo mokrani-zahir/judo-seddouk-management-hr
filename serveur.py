@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.14"
+APP_VERSION = "1.1.15"
 
 
 def update_json_url():
@@ -641,15 +641,15 @@ def run_gui(server):
 
     api = Api("http://%s:%d" % (HOST, PORT))
 
-    # Fenêtre aussi grande que l'aire de travail de l'écran (plein écran sans
-    # la barre des tâches). Pas de window.maximize() : buggé avec ce pilote
-    # (récursion infinie -> repli navigateur).
-    work = _work_area()
+    # Grande fenêtre par défaut (~90 % de l'écran) avec les boutons classiques
+    # réduire / agrandir / fermer. Pas le plein écran, pas de window.maximize()
+    # (buggé avec ce pilote : récursion infinie -> repli navigateur).
+    w, h = _work_area()
     window = webview.create_window(
         "Judo Club Seddouk — Gestion des Adhérents",
         "http://%s:%d/" % (HOST, PORT),
-        width=work[0],
-        height=work[1],
+        width=int(w * 0.9),
+        height=int(h * 0.9),
         min_size=(1024, 700),
         js_api=api,
     )
