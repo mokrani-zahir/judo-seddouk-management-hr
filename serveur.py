@@ -187,6 +187,13 @@ def data_path():
 
 DB_PATH = data_path()
 APP_DIR = os.path.dirname(DB_PATH)
+# Dossier de l'EXE (différent d'APP_DIR si la base a basculé vers %APPDATA%).
+# La mise à jour doit remplacer l'EXE là où il vit réellement.
+EXE_DIR = (
+    os.path.dirname(sys.executable)
+    if getattr(sys, "frozen", False)
+    else os.path.dirname(os.path.abspath(__file__))
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS adherents (
@@ -454,17 +461,29 @@ class Handler(BaseHTTPRequestHandler):
         if not info["update_available"]:
             self._send_json({"error": "Déjà à jour"})
             return
+        if not _dir_writable(EXE_DIR):
+            self._send_json({
+                "error": (
+                    "L'application se trouve dans un dossier protégé — la mise à jour "
+                    "est impossible.\n\nDéplacez le dossier de l'application (Judo Club Seddouk.exe) "
+                    "dans un emplacement normal, par exemple C:\\JudoClubSeddouk, puis relancez."
+                )
+            })
+            return
         self._send_json(download_update(info["exe_url"]))
 
     def _api_update_apply(self):
         if not getattr(sys, "frozen", False):
             self._send_json({"error": "L'auto-mise à jour nécessite la version portable (EXE)"}, 400)
             return
-        dest = os.path.join(APP_DIR, "Judo_Club_Seddouk.new.exe")
+        dest = os.path.join(EXE_DIR, "Judo_Club_Seddouk.new.exe")
         if not os.path.exists(dest):
             self._send_json({"error": "Fichier de mise à jour introuvable — relancez le téléchargement"}, 400)
             return
-        cmd_path = os.path.join(APP_DIR, "update-install.vbs")
+        if not _dir_writable(EXE_DIR):
+            self._send_json({"error": "Le dossier de l'application n'est pas accessible en écriture — déplacez-le dans C:\\JudoClubSeddouk et réessayez."})
+            return
+        cmd_path = os.path.join(EXE_DIR, "update-install.vbs")
         script = (
             "Option Explicit\n"
             "Dim fso, dir, tries, shell, i, launched\n"
@@ -539,7 +558,7 @@ class Handler(BaseHTTPRequestHandler):
             with open(cmd_path, "w", encoding="utf-8") as f:
                 f.write(script)
             try:
-                with open(os.path.join(APP_DIR, "update-log.txt"), "a", encoding="utf-8") as f:
+                with open(os.path.join(EXE_DIR, "update-log.txt"), "a", encoding="utf-8") as f:
                     f.write("[server] apply lance %s (%d octets)\n" % (datetime.datetime.now().isoformat(timespec="seconds"), os.path.getsize(dest)))
             except OSError:
                 pass
@@ -663,6 +682,19 @@ def run_gui(server):
     """Ouvre l'application dans une vraie fenêtre de logiciel (WebView2).
     Fermer la fenêtre arrête le serveur et quitte le programme."""
     import webview
+
+    # Avertir si l'EXE est dans un dossier non inscriptible (Program Files, etc.)
+    if getattr(sys, "frozen", False) and not _dir_writable(EXE_DIR):
+        _msgbox(
+            "Judo Club Seddouk",
+            (
+                "L'application se trouve dans un dossier protégé.\n\n"
+                "La mise à jour automatique et les sauvegardes exportées ne "
+                "fonctionneront pas dans cet emplacement.\n\n"
+                "Déplacez tout le dossier vers un emplacement normal, "
+                "par exemple C:\\JudoClubSeddouk, puis relancez."
+            ),
+        )
 
     api = Api("http://%s:%d" % (HOST, PORT))
 
