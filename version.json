@@ -1,5 +1,5 @@
 {
-  "version": "1.1.18",
-  "notes": "Version de test de la mise à jour automatique — rien de nouveau.",
+  "version": "1.1.19",
+  "notes": "Correction : la mise à jour automatique ne s'emballe plus quand l'application est dans un dossier protégé (Program Files…). Un message clair s'affiche au démarrage pour vous indiquer où déplacer l'application.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
