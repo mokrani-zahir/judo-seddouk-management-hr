@@ -1,5 +1,5 @@
 {
-  "version": "1.1.6",
-  "notes": "Correctif final : le redémarrage après mise à jour ne déclenche plus l'erreur de sécurité PyInstaller (suppression des variables d'environnement héritées du projet empaqueté).",
+  "version": "1.1.7",
+  "notes": "Test final : mise à jour automatique complète avec redémarrage sans erreur de sécurité.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
