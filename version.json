@@ -1,5 +1,5 @@
 {
-  "version": "1.1.16",
-  "notes": "Fenetre qui s'ouvre directement maximisee (bouton agrandir) : grande, avec la barre des taches et les boutons classiques.",
+  "version": "1.1.17",
+  "notes": "Correctif : si le dossier de l'EXE n'est pas inscriptible, la base judo.db est automatiquement placée dans un dossier personnel (%APPDATA%) — plus d'erreur 'unable to open database file' sur d'autres PC.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

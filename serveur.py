@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.16"
+APP_VERSION = "1.1.17"
 
 
 def update_json_url():
@@ -153,11 +153,36 @@ def resource_path(relative):
     return os.path.join(base, relative)
 
 
+def _dir_writable(path):
+    """Vrai si on peut créer/supprimer un fichier dans ce dossier."""
+    try:
+        probe = os.path.join(path, ".wtest")
+        with open(probe, "w"):
+            pass
+        os.remove(probe)
+        return True
+    except OSError:
+        return False
+
+
 def data_path():
-    """judo.db est placé à côté de l'EXE (ou du script) pour garder les données avec l'app."""
+    """judo.db est placé à côté de l'EXE (ou du script). Si ce dossier n'est pas
+    inscriptible (ex. Programme Files, racine, OneDrive cloud-only, dossier
+    protégé), on bascule vers un dossier personnel (%APPDATA%\\JudoClubSeddouk)
+    pour éviter l'erreur "unable to open database file" sur d'autres PC."""
     if getattr(sys, "frozen", False):
-        return os.path.join(os.path.dirname(sys.executable), "judo.db")
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "judo.db")
+        base = os.path.dirname(sys.executable)
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    primary = os.path.join(base, "judo.db")
+    if _dir_writable(base):
+        return primary
+    alt_dir = os.path.join(os.environ.get("APPDATA", base), "JudoClubSeddouk")
+    try:
+        os.makedirs(alt_dir, exist_ok=True)
+    except OSError:
+        return primary
+    return os.path.join(alt_dir, "judo.db")
 
 
 DB_PATH = data_path()
