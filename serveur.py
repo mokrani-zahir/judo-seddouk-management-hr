@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.21"
+APP_VERSION = "1.1.22"
 
 
 def update_json_url():
@@ -166,24 +166,25 @@ def _dir_writable(path):
 
 
 def data_path():
-    """judo.db est placé à côté de l'EXE (ou du script). Si ce dossier n'est pas
-    inscriptible (ex. Programme Files, racine, OneDrive cloud-only, dossier
-    protégé), on bascule vers un dossier personnel (%APPDATA%\\JudoClubSeddouk)
-    pour éviter l'erreur "unable to open database file" sur d'autres PC.
-    Si l'application est ensuite déplacée vers un dossier inscriptible, la base
-    qui se trouvait dans %APPDATA% est automatiquement ramenée à côté de l'EXE."""
+    """La base judo.db est TOUJOURS située dans %APPDATA%\\JudoClubSeddouk, quel que
+    soit l'emplacement de l'EXE (l'EXE peut être n'importe où sur le PC).
+    Si aucune base n'y existe mais qu'une base existe à côté de l'EXE (récupération
+    d'une ancienne version), celle-ci est automatiquement utilisée et ramenée."""
     if getattr(sys, "frozen", False):
-        base = os.path.dirname(sys.executable)
+        exe_dir = os.path.dirname(sys.executable)
     else:
-        base = os.path.dirname(os.path.abspath(__file__))
-    primary = os.path.join(base, "judo.db")
-    alt_dir = os.path.join(os.environ.get("APPDATA", base), "JudoClubSeddouk")
-    alt = os.path.join(alt_dir, "judo.db")
-    target = primary if _dir_writable(base) else alt
-    if target == primary and not os.path.exists(primary) and os.path.exists(alt):
+        exe_dir = os.path.dirname(os.path.abspath(__file__))
+    target_dir = os.path.join(os.environ.get("APPDATA", exe_dir), "JudoClubSeddouk")
+    try:
+        os.makedirs(target_dir, exist_ok=True)
+    except OSError:
+        # Dernier recours : si %APPDATA% est indisponible, on garde une base locale.
+        return os.path.join(exe_dir, "judo.db")
+    target = os.path.join(target_dir, "judo.db")
+    legacy = os.path.join(exe_dir, "judo.db")
+    if not os.path.exists(target) and os.path.exists(legacy):
         try:
-            os.makedirs(base, exist_ok=True)
-            shutil.copy2(alt, primary)
+            shutil.copy2(legacy, target)
         except OSError:
             pass
     return target
@@ -191,8 +192,8 @@ def data_path():
 
 DB_PATH = data_path()
 APP_DIR = os.path.dirname(DB_PATH)
-# Dossier de l'EXE (différent d'APP_DIR si la base a basculé vers %APPDATA%).
-# La mise à jour doit remplacer l'EXE là où il vit réellement.
+# Dossier de l'EXE, toujours distinct de %APPDATA% : la mise à jour doit
+# remplacer l'EXE là où il vit réellement.
 EXE_DIR = (
     os.path.dirname(sys.executable)
     if getattr(sys, "frozen", False)

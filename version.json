@@ -1,5 +1,5 @@
 {
-  "version": "1.1.21",
-  "notes": "Anti-faux-positif : la mise à jour automatique n'utilise plus de script VBS/wscript (remplacé par l'EXE lui-même). Icône et métadonnées de version ajoutées. Ajoutez l'application aux exclusions de votre antivirus si besoin.",
+  "version": "1.1.22",
+  "notes": "La base de données judo.db est désormais TOUJOURS dans %APPDATA%\\JudoClubSeddouk (l'EXE peut être placé n'importe où). Si une base existait à côté de l'ancien EXE, elle est automatiquement récupérée.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

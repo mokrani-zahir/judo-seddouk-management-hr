@@ -1,8 +1,8 @@
-# UTF-8
+﻿# UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 1, 21, 0),
-    prodvers=(1, 1, 21, 0),
+    filevers=(1, 1, 22, 0),
+    prodvers=(1, 1, 22, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -18,11 +18,11 @@ VSVersionInfo(
           [
             StringStruct('CompanyName', 'Judo Club Seddouk'),
             StringStruct('FileDescription', 'Judo Club Seddouk - Gestion des Adherents'),
-            StringStruct('FileVersion', '1.1.21'),
+            StringStruct('FileVersion', '1.1.22'),
             StringStruct('InternalName', 'Judo_Club_Seddouk'),
             StringStruct('OriginalFilename', 'Judo_Club_Seddouk.exe'),
             StringStruct('ProductName', 'Judo Club Seddouk'),
-            StringStruct('ProductVersion', '1.1.21')
+            StringStruct('ProductVersion', '1.1.22')
           ]
         )
       ]
