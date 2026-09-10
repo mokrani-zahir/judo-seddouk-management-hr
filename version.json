@@ -1,5 +1,5 @@
 {
-  "version": "1.1.15",
-  "notes": "Fenetre qui s'ouvre automatiquement en grand (~90% de l'ecran) avec les boutons classiques, sans plein ecran.",
+  "version": "1.1.16",
+  "notes": "Fenetre qui s'ouvre directement maximisee (bouton agrandir) : grande, avec la barre des taches et les boutons classiques.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

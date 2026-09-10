@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.15"
+APP_VERSION = "1.1.16"
 
 
 def update_json_url():
@@ -654,6 +654,7 @@ def run_gui(server):
         js_api=api,
     )
     api._main_window = window
+    window.events.loaded += lambda: window.maximize()
 
     def stop_server():
         threading.Thread(target=server.shutdown, daemon=True).start()
