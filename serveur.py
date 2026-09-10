@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.20"
+APP_VERSION = "1.1.21"
 
 
 def update_json_url():
@@ -497,104 +497,34 @@ class Handler(BaseHTTPRequestHandler):
                 return
             Handler._applying = True
         dest = os.path.join(EXE_DIR, "Judo_Club_Seddouk.new.exe")
-        cmd_path = os.path.join(EXE_DIR, "update-install.vbs")
-        script = (
-            "Option Explicit\n"
-            "Dim fso, dir, tries, shell, i, launched\n"
-            "Set fso = CreateObject(\"Scripting.FileSystemObject\")\n"
-            "Set shell = CreateObject(\"WScript.Shell\")\n"
-            "dir = fso.GetParentFolderName(WScript.ScriptFullName)\n"
-            "Call LogMsg(dir, \"[start] \" & Now)\n"
-            "tries = 0\n"
-            "Do While CheckRunning() And tries < 8\n"
-            "  WScript.Sleep 1000\n"
-            "  tries = tries + 1\n"
-            "Loop\n"
-            "If CheckRunning() Then\n"
-            "  Call LogMsg(dir, \"[force] taskkill \" & Now)\n"
-            "  ' PAS de /t : /t tuerait l'arborescence du process Judo, or wscript\n"
-            "  ' (notre installeur) est un descendant de ce process. /im suffit : il\n"
-            "  ' tue tous les process nommes Judo_Club_Seddouk.exe (parent + child).\n"
-            "  shell.Run \"taskkill /f /im Judo_Club_Seddouk.exe\", 0, True\n"
-            "  WScript.Sleep 2500\n"
-            "  If CheckRunning() Then Call LogMsg(dir, \"[warning] encore vivant apres taskkill \" & Now)\n"
-            "End If\n"
-            "Call ReplaceFiles(dir)\n"
-            "Call LogMsg(dir, \"[replaced] \" & Now)\n"
-            "launched = False\n"
-            "For i = 1 To 3\n"
-            "  shell.Run Chr(34) & dir & \"\\Judo_Club_Seddouk.exe\" & Chr(34), 1, False\n"
-            "  WScript.Sleep 3000\n"
-            "  If CheckRunning() Then\n"
-            "    launched = True\n"
-            "    Call LogMsg(dir, \"[relaunched] essai \" & i & \" \" & Now)\n"
-            "    Exit For\n"
-            "  End If\n"
-            "Next\n"
-            "If Not launched Then Call LogMsg(dir, \"[relaunch-failed] aucun processus detecte \" & Now)\n"
-            "' Le journal update-log.txt est conserve volontairement pour diagnostic.\n"
-            "fso.DeleteFile WScript.ScriptFullName\n"
-            "\n"
-            "Function CheckRunning()\n"
-            "  Dim q\n"
-            "  q = \"SELECT ProcessId FROM Win32_Process WHERE Name='Judo_Club_Seddouk.exe'\"\n"
-            "  If GetObject(\"winmgmts:\\\\.\\root\\cimv2\").ExecQuery(q).Count > 0 Then\n"
-            "    CheckRunning = True\n"
-            "  Else\n"
-            "    CheckRunning = False\n"
-            "  End If\n"
-            "End Function\n"
-            "\n"
-            "Sub ReplaceFiles(dir)\n"
-            "  Dim attempt\n"
-            "  For attempt = 1 To 20\n"
-            "    On Error Resume Next\n"
-            "    fso.DeleteFile dir & \"\\Judo_Club_Seddouk.exe\", True\n"
-            "    fso.MoveFile dir & \"\\Judo_Club_Seddouk.new.exe\", dir & \"\\Judo_Club_Seddouk.exe\"\n"
-            "    If Err.Number = 0 And fso.FileExists(dir & \"\\Judo_Club_Seddouk.exe\") Then Exit For\n"
-            "    Err.Clear\n"
-            "    On Error GoTo 0\n"
-            "    WScript.Sleep 1000\n"
-            "  Next\n"
-            "  On Error GoTo 0\n"
-            "End Sub\n"
-            "\n"
-            "Sub LogMsg(dir, msg)\n"
-            "  Dim f\n"
-            "  On Error Resume Next\n"
-            "  Set f = fso.OpenTextFile(dir & \"\\update-log.txt\", 8, True)\n"
-            "  f.WriteLine msg\n"
-            "  f.Close\n"
-            "  On Error GoTo 0\n"
-            "End Sub\n"
-        )
+        # Pas de script wscript/VBS : déclencher un script externe est un signal
+        # classique de malware pour les antivirus. Ici le NOUVEL EXE se lance
+        # lui-même en "mode mise à jour" (JUDO_UPDATE=1) : il ferme l'ancienne
+        # version puis se copie sur Judo_Club_Seddouk.exe, sans aucun script.
+        env = dict(os.environ)
+        for key in list(env):
+            if key.startswith("_PYI_") or key in ("PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP"):
+                env.pop(key, None)
+        env["JUDO_UPDATE"] = "1"
         try:
-            with open(cmd_path, "w", encoding="utf-8") as f:
-                f.write(script)
-            try:
-                with open(os.path.join(EXE_DIR, "update-log.txt"), "a", encoding="utf-8") as f:
-                    f.write("[server] apply lance %s (%d octets)\n" % (datetime.datetime.now().isoformat(timespec="seconds"), os.path.getsize(dest)))
-            except OSError:
-                pass
+            with open(os.path.join(EXE_DIR, "update-log.txt"), "a", encoding="utf-8") as f:
+                f.write("[server] apply lance %s (%d octets)\n" % (datetime.datetime.now().isoformat(timespec="seconds"), os.path.getsize(dest)))
+        except OSError:
+            pass
+        try:
             CREATE_NO_WINDOW = 0x08000000
-            # IMPORTANT : retirer les variables privées de PyInstaller (_PYI_*) de
-            # l'environnement hérité. Sinon le nouvel EXE relancé par la VBS hérite de
-            # _PYI_PARENT_PROCESS_LEVEL=1 (croit être le "child" d'une app onefile déjà
-            # lancée) et échoue la validation de sécurité du bootloader avec
-            # "Security validation failure: parent process has different executable!".
-            env = dict(os.environ)
-            for key in list(env):
-                if key.startswith("_PYI_") or key in ("PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP"):
-                    env.pop(key, None)
             subprocess.Popen(
-                ["wscript.exe", cmd_path],
+                [dest],
                 creationflags=CREATE_NO_WINDOW,
                 env=env,
+                cwd=EXE_DIR,
             )
-            _schedule_close_after_apply()
-            self._send_json({"ok": True})
         except Exception as e:
+            Handler._applying = False
             self._send_json({"error": str(e)})
+            return
+        _schedule_close_after_apply()
+        self._send_json({"ok": True})
 
 
 def open_browser():
@@ -603,7 +533,7 @@ def open_browser():
 
 def _schedule_close_after_apply():
     """Filet de sécurité : même si l'appel JS pywebview.close_app() échoue,
-    la fenêtre se ferme ~2,5 s après le clic (la VBS force ensuite si besoin)."""
+    la fenêtre se ferme ~2,5 s après le clic (le nouveau process force ensuite si besoin)."""
     api = Api._current
     if api is None:
         return
@@ -615,6 +545,68 @@ def _schedule_close_after_apply():
             pass
 
     threading.Timer(2.5, _close).start()
+
+
+def run_update_mode():
+    """Exécuté par le NOUVEL EXE (Judo_Club_Seddouk.new.exe) lorsqu'il est lancé avec
+    JUDO_UPDATE=1. Ferme l'ancienne version, se copie sur Judo_Club_Seddouk.exe puis
+    relance l'application. Entièrement en Python : aucun script (wscript/cmd) qui
+    éveillerait les antivirus."""
+    import time
+
+    exe_dir = EXE_DIR
+    new_exe = os.path.join(exe_dir, "Judo_Club_Seddouk.new.exe")
+    app_exe = os.path.join(exe_dir, "Judo_Club_Seddouk.exe")
+    log = os.path.join(exe_dir, "update-log.txt")
+
+    def log_msg(msg):
+        try:
+            with open(log, "a", encoding="utf-8") as f:
+                f.write("[update] %s %s\n" % (datetime.datetime.now().isoformat(timespec="seconds"), msg))
+        except OSError:
+            pass
+
+    def old_still_running():
+        # Compte les process nommés Judo_Club_Seddouk.exe (l'ancienne version).
+        # L'installeur actuel s'appelle Judo_Club_Seddouk.new.exe : il n'est PAS compté.
+        try:
+            out = subprocess.run(
+                ["tasklist", "/fi", "IMAGENAME eq Judo_Club_Seddouk.exe"],
+                capture_output=True, text=True, creationflags=0x08000000,
+            ).stdout
+            body = out.rsplit("===", 1)[-1] if "===" in out else out
+            return ".exe" in body and "INFO: Aucune tache" not in body
+        except Exception:
+            return False
+
+    log_msg("[start] remplacement du nouvel EXE")
+    time.sleep(4)  # laisser l'ancienne app se fermer proprement (window.close à 2,5 s)
+    for _ in range(6):
+        if not old_still_running():
+            break
+        time.sleep(1)
+    if old_still_running():
+        log_msg("[force] taskkill ancienne version")
+        subprocess.run(["taskkill", "/f", "/im", "Judo_Club_Seddouk.exe"], capture_output=True, creationflags=0x08000000)
+        time.sleep(2)
+    replaced = False
+    for attempt in range(1, 21):
+        try:
+            shutil.copy2(new_exe, app_exe)
+            replaced = True
+            break
+        except OSError:
+            time.sleep(1)
+    log_msg("[replaced] %s" % ("ok" if replaced else "ECHEC apres 20 tentatives"))
+    if replaced:
+        env = dict(os.environ)
+        for key in list(env):
+            if key.startswith("_PYI_") or key in ("PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP"):
+                env.pop(key, None)
+        env.pop("JUDO_UPDATE", None)
+        subprocess.Popen([app_exe], creationflags=0x08000000, env=env, cwd=exe_dir)
+        log_msg("[relaunched]")
+    time.sleep(1)
 
 
 class Api:
@@ -737,6 +729,20 @@ def run_gui(server):
 
 
 def main():
+    # Mode "auto-mise à jour" : ce process EST le nouveau EXE (Judo_Club_Seddouk.new.exe)
+    # lancé par l'ancienne version. Il remplace l'ancien EXE et se relance normalement.
+    if getattr(sys, "frozen", False) and os.environ.get("JUDO_UPDATE") == "1":
+        run_update_mode()
+        return
+
+    # Nettoyage du fichier provisoire de mise à jour (l'installeur ne peut pas
+    # se supprimer lui-même car Windows verrouille l'EXE en cours d'exécution).
+    if getattr(sys, "frozen", False):
+        try:
+            os.remove(os.path.join(EXE_DIR, "Judo_Club_Seddouk.new.exe"))
+        except OSError:
+            pass
+
     init_db()
     try:
         server = ThreadingHTTPServer((HOST, PORT), Handler)
