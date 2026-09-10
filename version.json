@@ -1,5 +1,5 @@
 {
-  "version": "1.1.17",
-  "notes": "Correctif : si le dossier de l'EXE n'est pas inscriptible, la base judo.db est automatiquement placée dans un dossier personnel (%APPDATA%) — plus d'erreur 'unable to open database file' sur d'autres PC.",
+  "version": "1.1.18",
+  "notes": "Version de test de la mise à jour automatique — rien de nouveau.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
