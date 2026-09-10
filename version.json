@@ -1,5 +1,5 @@
 {
-  "version": "1.1.22",
-  "notes": "La base de données judo.db est désormais TOUJOURS dans %APPDATA%\\JudoClubSeddouk (l'EXE peut être placé n'importe où). Si une base existait à côté de l'ancien EXE, elle est automatiquement récupérée.",
+  "version": "1.1.23",
+  "notes": "Nouvelle icône officielle du club dans l'application (logo).",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
