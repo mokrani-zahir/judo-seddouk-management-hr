@@ -1,5 +1,5 @@
 {
-  "version": "1.1.2",
-  "notes": "Correction : la mise à jour remplace maintenant l'ancienne version et redémarre automatiquement l'application (plus besoin de la fermer manuellement).",
+  "version": "1.1.3",
+  "notes": "Correction de stabilité : le serveur local ne gèle plus lors des rafales de requêtes (impression, export, démarrage).",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

@@ -910,10 +910,25 @@ function getAll() {
   return appData;
 }
 
+async function apiFetch(url, options, retries) {
+  retries = retries || 3;
+  let lastErr;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('Erreur serveur (' + res.status + ')');
+      return res;
+    } catch (e) {
+      lastErr = e;
+      await new Promise(r => setTimeout(r, 300 * (i + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 async function apiLoad() {
   try {
-    const res = await fetch('/api/adherents');
-    if (!res.ok) throw new Error('Erreur serveur');
+    const res = await apiFetch('/api/adherents');
     appData = await res.json();
   } catch (e) {
     console.error('Impossible de charger les données :', e);
