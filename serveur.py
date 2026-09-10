@@ -137,7 +137,7 @@ def download_update(url):
     """Télécharge le nouvel EXE à côté de l'application (sans toucher judo.db)."""
     import urllib.request
 
-    dest = os.path.join(APP_DIR, "Judo_Club_Seddouk.new.exe")
+    dest = os.path.join(EXE_DIR, "Judo_Club_Seddouk.new.exe")
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "JudoClubSeddouk-Updater/1.0"})
         with urllib.request.urlopen(req, timeout=120) as r, open(dest, "wb") as f:
@@ -169,20 +169,24 @@ def data_path():
     """judo.db est placé à côté de l'EXE (ou du script). Si ce dossier n'est pas
     inscriptible (ex. Programme Files, racine, OneDrive cloud-only, dossier
     protégé), on bascule vers un dossier personnel (%APPDATA%\\JudoClubSeddouk)
-    pour éviter l'erreur "unable to open database file" sur d'autres PC."""
+    pour éviter l'erreur "unable to open database file" sur d'autres PC.
+    Si l'application est ensuite déplacée vers un dossier inscriptible, la base
+    qui se trouvait dans %APPDATA% est automatiquement ramenée à côté de l'EXE."""
     if getattr(sys, "frozen", False):
         base = os.path.dirname(sys.executable)
     else:
         base = os.path.dirname(os.path.abspath(__file__))
     primary = os.path.join(base, "judo.db")
-    if _dir_writable(base):
-        return primary
     alt_dir = os.path.join(os.environ.get("APPDATA", base), "JudoClubSeddouk")
-    try:
-        os.makedirs(alt_dir, exist_ok=True)
-    except OSError:
-        return primary
-    return os.path.join(alt_dir, "judo.db")
+    alt = os.path.join(alt_dir, "judo.db")
+    target = primary if _dir_writable(base) else alt
+    if target == primary and not os.path.exists(primary) and os.path.exists(alt):
+        try:
+            os.makedirs(base, exist_ok=True)
+            shutil.copy2(alt, primary)
+        except OSError:
+            pass
+    return target
 
 
 DB_PATH = data_path()
