@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.11"
+APP_VERSION = "1.1.12"
 
 
 def update_json_url():
@@ -615,6 +615,25 @@ class Api:
         return "saved"
 
 
+def _work_area():
+    """Retourne (largeur, hauteur) de l'aire de travail de l'écran principal,
+    en pixels logiques, via SystemParametersInfo(SPI_GETWORKAREA)."""
+    import ctypes
+
+    class RECT(ctypes.Structure):
+        _fields_ = [
+            ("left", ctypes.c_long),
+            ("top", ctypes.c_long),
+            ("right", ctypes.c_long),
+            ("bottom", ctypes.c_long),
+        ]
+
+    r = RECT()
+    if ctypes.windll.user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(r), 0):
+        return (r.right - r.left, r.bottom - r.top)
+    return (1400, 850)
+
+
 def run_gui(server):
     """Ouvre l'application dans une vraie fenêtre de logiciel (WebView2).
     Fermer la fenêtre arrête le serveur et quitte le programme."""
@@ -622,16 +641,19 @@ def run_gui(server):
 
     api = Api("http://%s:%d" % (HOST, PORT))
 
+    # Fenêtre aussi grande que l'aire de travail de l'écran (plein écran sans
+    # la barre des tâches). Pas de window.maximize() : buggé avec ce pilote
+    # (récursion infinie -> repli navigateur).
+    work = _work_area()
     window = webview.create_window(
         "Judo Club Seddouk — Gestion des Adhérents",
         "http://%s:%d/" % (HOST, PORT),
-        width=1440,
-        height=900,
+        width=work[0],
+        height=work[1],
         min_size=(1024, 700),
         js_api=api,
     )
     api.main_window = window
-    window.events.loaded += lambda: window.maximize()
 
     def stop_server():
         threading.Thread(target=server.shutdown, daemon=True).start()
