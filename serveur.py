@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.8"
+APP_VERSION = "1.1.9"
 
 
 def update_json_url():
@@ -453,8 +453,11 @@ class Handler(BaseHTTPRequestHandler):
             "  tries = tries + 1\n"
             "Loop\n"
             "If CheckRunning() Then\n"
-            "  Call LogMsg(dir, \"[force] taskkill /f /t \" & Now)\n"
-            "  shell.Run \"taskkill /f /t /im Judo_Club_Seddouk.exe\", 0, True\n"
+            "  Call LogMsg(dir, \"[force] taskkill \" & Now)\n"
+            "  ' PAS de /t : /t tuerait l'arborescence du process Judo, or wscript\n"
+            "  ' (notre installeur) est un descendant de ce process. /im suffit : il\n"
+            "  ' tue tous les process nommes Judo_Club_Seddouk.exe (parent + child).\n"
+            "  shell.Run \"taskkill /f /im Judo_Club_Seddouk.exe\", 0, True\n"
             "  WScript.Sleep 2500\n"
             "  If CheckRunning() Then Call LogMsg(dir, \"[warning] encore vivant apres taskkill \" & Now)\n"
             "End If\n"
