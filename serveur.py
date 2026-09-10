@@ -8,6 +8,7 @@ Lancer : python serveur.py  (ou via l'EXE portable)
 Base de données créée automatiquement : judo.db (dans le même dossier que l'EXE)
 """
 
+import datetime
 import json
 import os
 import shutil
@@ -26,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.4"
+APP_VERSION = "1.1.5"
 
 
 def update_json_url():
@@ -441,26 +442,37 @@ class Handler(BaseHTTPRequestHandler):
         cmd_path = os.path.join(APP_DIR, "update-install.vbs")
         script = (
             "Option Explicit\n"
-            "Dim fso, dir, tries, shell\n"
+            "Dim fso, dir, tries, shell, i, launched\n"
             "Set fso = CreateObject(\"Scripting.FileSystemObject\")\n"
             "Set shell = CreateObject(\"WScript.Shell\")\n"
             "dir = fso.GetParentFolderName(WScript.ScriptFullName)\n"
             "Call LogMsg(dir, \"[start] \" & Now)\n"
             "tries = 0\n"
-            "Do While CheckRunning() And tries < 40\n"
+            "Do While CheckRunning() And tries < 8\n"
             "  WScript.Sleep 1000\n"
             "  tries = tries + 1\n"
             "Loop\n"
             "If CheckRunning() Then\n"
-            "  Call LogMsg(dir, \"[force] \" & Now)\n"
-            "  shell.Run \"taskkill /f /im Judo_Club_Seddouk.exe\", 0, True\n"
-            "  WScript.Sleep 2000\n"
+            "  Call LogMsg(dir, \"[force] taskkill /f /t \" & Now)\n"
+            "  shell.Run \"taskkill /f /t /im Judo_Club_Seddouk.exe\", 0, True\n"
+            "  WScript.Sleep 2500\n"
+            "  If CheckRunning() Then Call LogMsg(dir, \"[warning] encore vivant apres taskkill \" & Now)\n"
             "End If\n"
             "Call ReplaceFiles(dir)\n"
             "Call LogMsg(dir, \"[replaced] \" & Now)\n"
-            "shell.Run Chr(34) & dir & \"\\Judo_Club_Seddouk.exe\" & Chr(34), 1, False\n"
+            "launched = False\n"
+            "For i = 1 To 3\n"
+            "  shell.Run Chr(34) & dir & \"\\Judo_Club_Seddouk.exe\" & Chr(34), 1, False\n"
+            "  WScript.Sleep 3000\n"
+            "  If CheckRunning() Then\n"
+            "    launched = True\n"
+            "    Call LogMsg(dir, \"[relaunched] essai \" & i & \" \" & Now)\n"
+            "    Exit For\n"
+            "  End If\n"
+            "Next\n"
+            "If Not launched Then Call LogMsg(dir, \"[relaunch-failed] aucun processus detecte \" & Now)\n"
+            "' Le journal update-log.txt est conserve volontairement pour diagnostic.\n"
             "fso.DeleteFile WScript.ScriptFullName\n"
-            "fso.DeleteFile dir & \"\\update-log.txt\"\n"
             "\n"
             "Function CheckRunning()\n"
             "  Dim q\n"
@@ -473,8 +485,8 @@ class Handler(BaseHTTPRequestHandler):
             "End Function\n"
             "\n"
             "Sub ReplaceFiles(dir)\n"
-            "  Dim i\n"
-            "  For i = 1 To 20\n"
+            "  Dim attempt\n"
+            "  For attempt = 1 To 20\n"
             "    On Error Resume Next\n"
             "    fso.DeleteFile dir & \"\\Judo_Club_Seddouk.exe\", True\n"
             "    fso.MoveFile dir & \"\\Judo_Club_Seddouk.new.exe\", dir & \"\\Judo_Club_Seddouk.exe\"\n"
@@ -498,8 +510,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             with open(cmd_path, "w", encoding="utf-8") as f:
                 f.write(script)
+            try:
+                with open(os.path.join(APP_DIR, "update-log.txt"), "a", encoding="utf-8") as f:
+                    f.write("[server] apply lance %s (%d octets)\n" % (datetime.datetime.now().isoformat(timespec="seconds"), os.path.getsize(dest)))
+            except OSError:
+                pass
             CREATE_NO_WINDOW = 0x08000000
             subprocess.Popen(["wscript.exe", cmd_path], creationflags=CREATE_NO_WINDOW)
+            _schedule_close_after_apply()
             self._send_json({"ok": True})
         except Exception as e:
             self._send_json({"error": str(e)})
@@ -509,15 +527,34 @@ def open_browser():
     threading.Timer(1.0, lambda: webbrowser.open("http://%s:%d" % (HOST, PORT))).start()
 
 
+def _schedule_close_after_apply():
+    """Filet de sécurité : même si l'appel JS pywebview.close_app() échoue,
+    la fenêtre se ferme ~2,5 s après le clic (la VBS force ensuite si besoin)."""
+    api = Api.current
+    if api is None:
+        return
+
+    def _close():
+        try:
+            api.close_app()
+        except Exception:
+            pass
+
+    threading.Timer(2.5, _close).start()
+
+
 class Api:
     """Pont JS <-> Python : permet d'ouvrir la fiche / le badge dans une
     nouvelle fenêtre du logiciel (au lieu de window.open d'un navigateur),
     et de fermer proprement l'application après une mise à jour."""
 
+    current = None
+
     def __init__(self, base_url):
         self.base_url = base_url
         self.main_window = None
         self.child_windows = []
+        Api.current = self
 
     def open_file(self, rel_url):
         import webview

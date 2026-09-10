@@ -1586,19 +1586,22 @@ async function installUpdate() {
   }
 }
 
+function closeAppNow() {
+  if (window.pywebview && window.pywebview.api && window.pywebview.api.close_app) {
+    try { window.pywebview.api.close_app(); } catch (e) { /* fallback ci-dessous */ }
+  }
+  try { window.close(); } catch (e) {}
+}
+
 async function applyUpdate() {
   try {
     const r = await (await fetch('/api/update/apply', { method: 'POST' })).json();
     if (!r.ok) { showToast('Échec de l\'installation : ' + (r.error || '?'), 'error'); return; }
     document.getElementById('confirmUpdateModal').classList.remove('active');
     showToast('Fermeture et remplacement en cours…', '');
-    setTimeout(function() {
-      if (window.pywebview && window.pywebview.api && window.pywebview.api.close_app) {
-        try { window.pywebview.api.close_app(); } catch (e) { try { window.close(); } catch (e2) {} }
-      } else {
-        try { window.close(); } catch (e) {}
-      }
-    }, 600);
+    closeAppNow();
+    setTimeout(closeAppNow, 2500);
+    setTimeout(closeAppNow, 5000);
   } catch (e) {
     showToast('Échec de l\'installation : ' + e.message, 'error');
   }

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.4",
-  "notes": "Version de test de la mise à jour automatique : vérifiez que l'application se ferme, se met à jour et redémarre toute seule.",
+  "version": "1.1.5",
+  "notes": "Test de mise à jour v2 : fermeture automatique garantie, remplacement plus rapide (8 s max), relance vérifiée et journal update-log.txt conservé pour diagnostic.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
