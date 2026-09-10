@@ -1,0 +1,15 @@
+# Données locales (jamais à publier — contiennent les adhérents)
+judo.db
+*.db
+
+# Artefacts de build
+build/
+__pycache__/
+*.pyc
+
+# Fichiers de mise à jour en attente
+Judo_Club_Seddouk.new.exe
+update-install.cmd
+
+# Utilitaires
+*.log
