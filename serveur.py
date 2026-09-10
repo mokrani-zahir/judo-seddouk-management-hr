@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.13"
+APP_VERSION = "1.1.14"
 
 
 def update_json_url():
@@ -546,7 +546,7 @@ def open_browser():
 def _schedule_close_after_apply():
     """Filet de sécurité : même si l'appel JS pywebview.close_app() échoue,
     la fenêtre se ferme ~2,5 s après le clic (la VBS force ensuite si besoin)."""
-    api = Api.current
+    api = Api._current
     if api is None:
         return
 
@@ -567,19 +567,19 @@ class Api:
     current = None
 
     def __init__(self, base_url):
-        self.base_url = base_url
-        self.main_window = None
-        self.child_windows = []
-        Api.current = self
+        self._base_url = base_url
+        self._main_window = None
+        self._child_windows = []
+        Api._current = self
 
     def open_file(self, rel_url):
         import webview
         try:
-            url = self.base_url + "/" + unquote(rel_url.lstrip("/"))
+            url = self._base_url + "/" + unquote(rel_url.lstrip("/"))
             w = webview.create_window(
                 "Judo Club Seddouk", url, width=900, height=1200, min_size=(600, 700)
             )
-            self.child_windows.append(w)
+            self._child_windows.append(w)
         except Exception as e:
             print("open_file error:", e)
         return True
@@ -589,14 +589,14 @@ class Api:
         de mise à jour remplace l'ancien EXE par le nouveau et le relance."""
         import webview
         try:
-            for w in list(self.child_windows):
+            for w in list(self._child_windows):
                 try:
                     if w is not None:
                         w.destroy()
                 except Exception:
                     pass
-            if self.main_window is not None:
-                self.main_window.destroy()
+            if self._main_window is not None:
+                self._main_window.destroy()
         except Exception as e:
             print("close_app error:", e)
         return True
@@ -653,7 +653,7 @@ def run_gui(server):
         min_size=(1024, 700),
         js_api=api,
     )
-    api.main_window = window
+    api._main_window = window
 
     def stop_server():
         threading.Thread(target=server.shutdown, daemon=True).start()

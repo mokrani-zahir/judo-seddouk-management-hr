@@ -1,5 +1,5 @@
 {
-  "version": "1.1.13",
-  "notes": "Boutons Mise à jour / Exporter / Importer en haut + menu 'Badge & Formulaire' pour créer des documents vierges directement.",
+  "version": "1.1.14",
+  "notes": "Correction du blocage au demarrage : la récursion infinie interne à pywebview est éliminée (attributs internes masqués).",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
