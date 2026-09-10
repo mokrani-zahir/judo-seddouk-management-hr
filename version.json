@@ -1,5 +1,5 @@
 {
-  "version": "1.1.12",
-  "notes": "Fenetre native aussi grande que l'ecran (sans maximize bugge, sans repli navigateur).",
+  "version": "1.1.13",
+  "notes": "Boutons Mise à jour / Exporter / Importer en haut + menu 'Badge & Formulaire' pour créer des documents vierges directement.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

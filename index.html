@@ -69,6 +69,30 @@
     color: var(--dark);
   }
 
+  .app-header .header-actions {
+    margin-left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .app-header .header-actions button,
+  .app-header .header-actions select {
+    background: transparent;
+    border: 1.5px solid var(--gold);
+    color: #fff;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .app-header .header-actions select { max-width: 190px; }
+  .app-header .header-actions select option { color: var(--dark); background: #fff; }
+  .app-header .header-actions button:hover { background: var(--gold); color: var(--dark); }
+  .app-header .header-actions .version-chip { font-size: 12px; color: var(--gold); align-self: center; }
+
   /* ── CONTAINER ── */
   .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
   .view { display: none; }
@@ -553,6 +577,7 @@
   @media (max-width: 600px) {
     .app-header { flex-wrap: wrap; padding: 10px 14px; }
     .app-header .nav-links { width: 100%; justify-content: center; }
+    .app-header .header-actions { width: 100%; justify-content: center; margin-left: 0; }
     .container { padding: 14px 8px; }
     .form-body { padding: 16px 12px; }
     .detail-body { padding: 16px 12px; }
@@ -572,6 +597,17 @@
     <button id="navDashboard" class="active" onclick="showView('dashboard')">Tableau de bord</button>
     <button id="navNew" onclick="showView('form', null)">+ Nouvel adhérent</button>
   </nav>
+  <div class="header-actions">
+    <select id="createDocSelect" onchange="createDirectDoc(this.value); this.value = '';" title="Créer un document directement, sans adhérent">
+      <option value="" disabled selected>Badge &amp; Formulaire…</option>
+      <option value="badge">🏷 Badge vierge</option>
+      <option value="fiche">📋 Formulaire vierge</option>
+    </select>
+    <button onclick="exportData()" title="Télécharger une sauvegarde JSON">📤 Exporter</button>
+    <button onclick="importData()" title="Restaurer depuis une sauvegarde JSON">📥 Importer</button>
+    <button onclick="checkForUpdates(false)" title="Rechercher une nouvelle version du logiciel">🔄 Mise à jour</button>
+    <span class="version-chip" id="versionChip" title="Version installée">…</span>
+  </div>
 </header>
 
 <!-- ══════════ TOAST ══════════ -->
@@ -626,14 +662,8 @@
         <option value="documents_recus">Documents reçus</option>
         <option value="valide">Validé</option>
       </select>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Télécharger une sauvegarde JSON">📤 Exporter</button>
-        <button class="btn btn-secondary btn-sm" onclick="importData()" title="Restaurer depuis une sauvegarde JSON">📥 Importer</button>
-        <button class="btn btn-outline btn-sm" onclick="checkForUpdates(false)" title="Rechercher une nouvelle version du logiciel">🔄 Mise à jour</button>
-        <span id="versionChip" style="align-self:center; font-size:12px; color:var(--gold);" title="Version installée">…</span>
-        <button class="btn" onclick="showView('form', null)">+ Nouvel adhérent</button>
-      </div>
       <input type="file" id="importFileInput" accept=".json,application/json" style="display:none" onchange="handleImport(event)">
+      <button class="btn" onclick="showView('form', null)">+ Nouvel adhérent</button>
     </div>
     <div class="adherents-grid" id="adherentsGrid"></div>
     <div class="pagination" id="pagination"></div>
@@ -1651,6 +1681,22 @@ function openPrintPage(url, msgType) {
   };
   w.addEventListener('load', send);
   setTimeout(send, 1500);
+}
+/* Crée un document vierge (badge / formulaire) sans passer par un adhérent. */
+function createDirectDoc(what) {
+  try {
+    if (what === 'badge') {
+      localStorage.removeItem('judo_prefill_badge');
+      openPrintPage('Badge_B3_Judo_Club_Seddouk_115x94mm-recto.html', '');
+      showToast('Badge vierge ouvert — prêt à imprimer.', 'success');
+    } else if (what === 'fiche') {
+      localStorage.removeItem('judo_prefill_fiche');
+      openPrintPage('Fiche de renseignement Judo Club Seddouk.html', '');
+      showToast('Formulaire vierge ouvert — prêt à imprimer.', 'success');
+    }
+  } catch (e) {
+    showToast('Impossible d\'ouvrir le document : ' + e.message, 'error');
+  }
 }
 function printFiche() {
   const a = getAdherentData();
