@@ -1,5 +1,5 @@
 {
-  "version": "1.1.9",
-  "notes": "Correctif : l'installeur ne se tue plus lui-meme (taskkill sans /t) — mise à jour fiable meme si la fenetre met du temps a se fermer.",
+  "version": "1.1.10",
+  "notes": "Fenetre maximisée par defaut a l'ouverture + correctif installeur (taskkill sans /t).",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
