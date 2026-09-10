@@ -1,5 +1,5 @@
 {
-  "version": "1.1.10",
-  "notes": "Fenetre maximisée par defaut a l'ouverture + correctif installeur (taskkill sans /t).",
+  "version": "1.1.11",
+  "notes": "Fenetre native maximisée a l'ouverture (sans repli navigateur) — correction du bug maximize.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
