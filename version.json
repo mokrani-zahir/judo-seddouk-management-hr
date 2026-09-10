@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
-  "notes": "Version initiale : fenêtre native, impression Fiche/Badge, export vers Emplacement choisi, mise à jour automatique.",
+  "version": "1.1.1",
+  "notes": "Corrections mineures de stabilité et de la vérification de mise à jour.",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }
