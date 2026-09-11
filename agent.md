@@ -25,6 +25,7 @@ forme d'un EXE portable autonome, avec mise à jour automatique depuis GitHub.
 - **3 documents HTML** copiés dans l'EXE via `--add-data` : `Fiche de renseignement Judo Club Seddouk.html`, `Badge_B3_Judo_Club_Seddouk_115x94mm.html`, `Badge_B3_Judo_Club_Seddouk_115x94mm-recto.html`.
 - **`judo.db`** : SQLite. Table `adherents` (colonne `numero`, ...).
 - **`app.ico`** : icône EXE (créée depuis `logo.png`, multi-tailles 16→256).
+- **`api-ms-win-core-path-l1-1-0.dll`** : DLL "hack" (Wine, repo `nalexandru/api-ms-win-core-path-HACK`, release 0.3.1 x64) requise pour **Windows 7** (Python 3.9+ n'existe pas sur Win7). Embarquée dans l'EXE via `--add-binary` → l'EXE unique marche sur Win10 **et** Win7. Sur Win7, il faut aussi le **runtime WebView2** installé (sinon repli navigateur).
 - **`version_info.txt`** : métadonnées/version Windows, à synchroniser avec `APP_VERSION` à chaque bump.
 - **`version.json`** : publié sur GitHub, déclencheur de la mise à jour (`{ "version", "notes", "exe_url" }`).
 
@@ -91,6 +92,7 @@ faux positifs antivirus + historiquement source de bugs).
 | 1.1.21 | faux positifs antivirus (pattern VBS + téléchargement + auto-remplacement) | suppression totale de wscript/VBS → le `.new.exe` se remplace lui-même (voir architecture) ; + icône `--icon` et métadonnées `--version-file` |
 | 1.1.22 | base pas toujours dans `%APPDATA%` (demande utilisateur) | `data_path()` : TOUJOURS `%APPDATA%\JudoClubSeddouk`, récupération auto de l'ancienne base à côté de l'EXE |
 | 1.1.23 | icône du club | `app.ico` généré depuis `logo.png` (Pillow), recomplié, publé |
+| 1.1.24 | exe ne démarre pas sur Windows 7 (`api-ms-win-core-path-l1-1-0.dll` manquante : Python 3.9+ = Win8+) | embarquement de la DLL hack (Wine) via `--add-binary` dans l'EXE unique ; sur Win7, installer aussi le runtime WebView2 |
 
 ---
 
@@ -106,7 +108,7 @@ Après `--distpath"$stage\dist"`, il faut TOUJOURS : `Copy-Item "$stage\dist\Jud
    ```
    $p="C:\Users\PC\Documents\Project\judo_seddouk"; $stage="C:\Users\PC\AppData\Local\Temp\opencode\build_11NN"
    Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
-   python -m PyInstaller --onefile --noconsole --name "Judo_Club_Seddouk" --icon "$p\app.ico" --version-file "$p\version_info.txt" --add-data "$p\index.html;." --add-data "$p\Fiche de renseignement Judo Club Seddouk.html;." --add-data "$p\Badge_B3_Judo_Club_Seddouk_115x94mm.html;." --add-data "$p\Badge_B3_Judo_Club_Seddouk_115x94mm-recto.html;." --hidden-import webview --hidden-import webview.platforms.winforms --hidden-import webview.platforms.edgechromium --hidden-import clr_loader --hidden-import pythonnet --distpath "$stage\dist" --workpath "$stage\build" --specpath "$stage" "$p\serveur.py"
+   python -m PyInstaller --onefile --noconsole --name "Judo_Club_Seddouk" --icon "$p\app.ico" --version-file "$p\version_info.txt" --add-data "$p\index.html;." --add-data "$p\Fiche de renseignement Judo Club Seddouk.html;." --add-data "$p\Badge_B3_Judo_Club_Seddouk_115x94mm.html;." --add-data "$p\Badge_B3_Judo_Club_Seddouk_115x94mm-recto.html;." --add-binary "$p\api-ms-win-core-path-l1-1-0.dll;." --hidden-import webview --hidden-import webview.platforms.winforms --hidden-import webview.platforms.edgechromium --hidden-import clr_loader --hidden-import pythonnet --distpath "$stage\dist" --workpath "$stage\build" --specpath "$stage" "$p\serveur.py"
    ```
 4. **Copier l'EXE dans dist** : `Copy-Item "$stage\dist\Judo_Club_Seddouk.exe" "$p\dist\Judo_Club_Seddouk.exe" -Force` ;
    retirer les résidus `update-install.vbs`, `Judo_Club_Seddouk.new.exe`, `update-log.txt` de `dist`.
@@ -137,11 +139,12 @@ Après `--distpath"$stage\dist"`, il faut TOUJOURS : `Copy-Item "$stage\dist\Jud
 ---
 
 ## ÉTAT ACTUEL
-- **Dernière version : 1.1.23** — publiée et vérifiée (json + EXE cohérents sur GitHub). Icône = logo officiel (`app.ico` depuis `logo.png`), cache d'icônes Windows vidé.
-- L'app tourne en 1.1.23 sur ce PC (port 8000).
+- **Dernière version : 1.1.24** — publiée et vérifiée (json + EXE cohérents sur GitHub). Compatibilité **Windows 7** (api-ms-win-core-path-l1-1-0.dll embarquée).
+- L'app tourne en 1.1.24 sur ce PC (port 8000).
 - **Autre PC** : possède encore la 1.1.17 (dossier protégé) → NE PEUT pas s'auto-mettre à jour. Installer manuellement : télécharger `https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe`, le placer n'importe où (ex. `C:\JudoClubSeddouk`), lancer ; la base `%APPDATA%` existante sera utilisée automatiquement.
 
 ## PROCHAINES ÉTAPES SUGGÉRÉES
+- **Win7** : installer le runtime WebView2 (Evergreen) sur le PC Win7, puis vérifier que l'app 1.1.24 démarre bien (la base `%APPDATA%` existante sera utilisée automatiquement).
 - Vérifier avec l'utilisateur le rendu de la nouvelle icône (il restait sur le cache Windows).
 - Eventuellement recadrer `logo.png` (120×122) si le rendu 32×32 n'est pas net.
 - Optionnel : version "installer signé / exclusions antivirus" pour l'autre PC.
