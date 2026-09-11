@@ -1,5 +1,5 @@
 {
-  "version": "1.1.23",
-  "notes": "Nouvelle icône officielle du club dans l'application (logo).",
+  "version": "1.1.24",
+  "notes": "Compatibilité Windows 7 (api-ms-win-core-path-l1-1-0.dll embarqué).",
   "exe_url": "https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe"
 }

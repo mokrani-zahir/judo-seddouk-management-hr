@@ -27,7 +27,7 @@ HOST = "127.0.0.1"
 REPO = "mokrani-zahir/judo-seddouk-management-hr"
 RAW_PREFIX = "https://raw.githubusercontent.com/%s/master" % REPO
 VERSION_JSON_URL = RAW_PREFIX + "/version.json"
-APP_VERSION = "1.1.23"
+APP_VERSION = "1.1.24"
 
 
 def update_json_url():
