@@ -141,10 +141,19 @@ Après `--distpath"$stage\dist"`, il faut TOUJOURS : `Copy-Item "$stage\dist\Jud
 ## ÉTAT ACTUEL
 - **Dernière version : 1.1.24** — publiée et vérifiée (json + EXE cohérents sur GitHub). Compatibilité **Windows 7** (api-ms-win-core-path-l1-1-0.dll embarquée).
 - L'app tourne en 1.1.24 sur ce PC (port 8000).
+- **Win7 — installateur automatique** : `win7/install_Win7.bat` (un seul fichier, à exécuter en administrateur). Il installe tout seul, par ordre :
+  1. activation TLS 1.2 (registre Schannel, requis pour télécharger sur un Win7 non-à-jour) ;
+  2. `Windows6.1-KB2533623-x64.msu` (dans `win7/`, SHA1 `8A59EA3C7378895791E6CDCA38CC2AD9E83BEBFF` ; sinon miroir `beny1226/Windows-7-KB2533623`) — corrige l'erreur `_socket`/KERNEL32 ;
+  3. .NET Framework 4.8 (`linkid=2088631`) — requis pour que pywebview active WebView2 (winforms `_is_chromium` exige la Release >= 394802, i.e. .NET 4.6.2+) ;
+  4. `vc_redist.x64.exe` (`aka.ms/vs/17/release`) ;
+  5. WebView2 **109.0.1518.78** Fixed Version (cab `westinyang/WebView2RuntimeArchive`, dernière version compatible Win7 : 110+ échoue avec `PackageIdFromFullName…KERNEL32.dll`) → extrait vers `%ProgramFiles%\WebView2`, détection de `msedgewebview2.exe`, écriture `pv` dans `HKLM\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}` et `WEBVIEW2_BROWSER_EXECUTABLE_FOLDER` (machine + utilisateur) ;
+  6. télécharge l'EXE 1.1.24 du repo sur `%PUBLIC%\Desktop`, affiche le résumé puis **redémarre seul** (15 s, annulable `shutdown /a`).
+- Le bat tolère un dossier clé USB : si les fichiers (msu/cab/exe/installateurs) sont déjà à côté, ils sont réutilisés (téléchargement seulement si absent). Les téléchargements utilisent `bitsadmin` puis `certutil` en secours.
+- **Piège syntaxe .bat** : le modificateur de taille de variable `for` DOIT matcher la casse (`%%~zs` avec `%%s`, PAS `%%~zS`) sinon cmd l'imprime littéralement.
 - **Autre PC** : possède encore la 1.1.17 (dossier protégé) → NE PEUT pas s'auto-mettre à jour. Installer manuellement : télécharger `https://raw.githubusercontent.com/mokrani-zahir/judo-seddouk-management-hr/master/dist/Judo_Club_Seddouk.exe`, le placer n'importe où (ex. `C:\JudoClubSeddouk`), lancer ; la base `%APPDATA%` existante sera utilisée automatiquement.
 
 ## PROCHAINES ÉTAPES SUGGÉRÉES
-- **Win7** : installer le runtime WebView2 (Evergreen) sur le PC Win7, puis vérifier que l'app 1.1.24 démarre bien (la base `%APPDATA%` existante sera utilisée automatiquement).
+- **Win7** : faire tourner `win7/install_Win7.bat` (clic droit → exécuter en tant qu'administrateur) sur le PC Win7 ; après redémarrage, l'exe est sur le Bureau. Vérifier que l'app 1.1.24 démarre bien (la base `%APPDATA%` existante sera utilisée automatiquement).
 - Vérifier avec l'utilisateur le rendu de la nouvelle icône (il restait sur le cache Windows).
 - Eventuellement recadrer `logo.png` (120×122) si le rendu 32×32 n'est pas net.
 - Optionnel : version "installer signé / exclusions antivirus" pour l'autre PC.
