@@ -1,0 +1,3 @@
+# Forcer CRLF pour les .bat : cmd.exe et le telechargement raw GitHub
+# exigent des fins de ligne CRLF (le fichier est envoye tel quel depuis le blob).
+win7/*.bat -text

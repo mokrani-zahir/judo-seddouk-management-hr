@@ -14,7 +14,14 @@ if errorlevel 1 (
     echo.
     echo    Cliquez sur "Oui" pour continuer. Rien d'autre a faire.
     echo.
-    powershell -NoProfile -WindowStyle Hidden -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+    powershell -NoProfile -Command "Start-Process -Verb RunAs -FilePath '%~f0'" >nul 2>&1
+    if errorlevel 1 (
+        echo.
+        echo    Echec de l'elevation : cliquez sur "Oui" quand la fenetre bleue apparait.
+        echo    Sinon : clic droit sur install_Win7.bat -^> "Executer en tant qu'administrateur".
+        pause
+        exit /b 1
+    )
     exit /b 0
 )
 
