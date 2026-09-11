@@ -10,11 +10,12 @@ echo.
 
 net session >nul 2>&1
 if errorlevel 1 (
-    echo ERREUR : ce fichier doit etre lance en tant qu'ADMINISTRATEUR.
-    echo Clic droit sur install_Win7.bat -^> "Executer en tant qu'administrateur".
+    echo    Elevation automatique : une fenetre bleue (UAC) va apparaitre.
     echo.
-    pause
-    exit /b 1
+    echo    Cliquez sur "Oui" pour continuer. Rien d'autre a faire.
+    echo.
+    powershell -NoProfile -WindowStyle Hidden -Command "Start-Process -Verb RunAs -FilePath '%~f0'"
+    exit /b 0
 )
 
 if not exist "%SystemRoot%\SysWOW64" (

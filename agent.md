@@ -141,7 +141,7 @@ Après `--distpath"$stage\dist"`, il faut TOUJOURS : `Copy-Item "$stage\dist\Jud
 ## ÉTAT ACTUEL
 - **Dernière version : 1.1.24** — publiée et vérifiée (json + EXE cohérents sur GitHub). Compatibilité **Windows 7** (api-ms-win-core-path-l1-1-0.dll embarquée).
 - L'app tourne en 1.1.24 sur ce PC (port 8000).
-- **Win7 — installateur automatique** : `win7/install_Win7.bat` (un seul fichier, à exécuter en administrateur). Il installe tout seul, par ordre :
+- **Win7 — installateur automatique** : `win7/install_Win7.bat` (**double-clic, aucune manipulation** : il se relance lui-même en administrateur via `powershell Start-Process -Verb RunAs` — l'utilisateur n'a qu'à cliquer "Oui" sur l'écran UAC). Il installe tout seul, par ordre :
   1. activation TLS 1.2 (registre Schannel, requis pour télécharger sur un Win7 non-à-jour) ;
   2. `Windows6.1-KB2533623-x64.msu` (dans `win7/`, SHA1 `8A59EA3C7378895791E6CDCA38CC2AD9E83BEBFF` ; sinon miroir `beny1226/Windows-7-KB2533623`) — corrige l'erreur `_socket`/KERNEL32 ;
   3. .NET Framework 4.8 (`linkid=2088631`) — requis pour que pywebview active WebView2 (winforms `_is_chromium` exige la Release >= 394802, i.e. .NET 4.6.2+) ;
